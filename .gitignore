@@ -1,0 +1,15 @@
+# Device-side runtime state (accumulated readings) — never commit
+model_state.json
+*.json.tmp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ai/
+
+# packaging
+*.egg-info/
+build/
+dist/
