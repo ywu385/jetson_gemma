@@ -46,7 +46,9 @@ _PAGE = """
     .panel {{
       max-width: 40rem; background: rgba(0,0,0,0.55);
       padding: 1.25rem 1.5rem; border-radius: 0.75rem;
-      margin: auto 0;  /* vertically center; collapses to top-aligned if taller than the screen */
+      /* push toward the bottom: top margin soaks up the space, panel floats 12vh
+         above the bottom edge; collapses to top-aligned if taller than the screen */
+      margin-top: auto; margin-bottom: 12vh;
     }}
     button {{
       background: white; border: 1px solid white; border-radius: 0.5rem;
