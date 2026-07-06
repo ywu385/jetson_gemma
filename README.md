@@ -43,18 +43,13 @@ and deterministic stays on the laptop.
 > ```
 
 ```bash
-# --- one-time setup (laptop) ---
-cd jetson_gemma
-python -m venv .venv && source .venv/bin/activate
-pip install -e .                     # installs deps + the globe-bayes-* commands
-
-# --- every run ---
 # 1) open the tunnel to the Jetson (separate terminal, leave it open).
 #    Use YOUR username and however you reach YOUR Jetson (IP, mDNS name, alias):
 ssh -f -N -L 11434:localhost:11434 <user>@<jetson-ip>
 
-# 2) start the web app:
-globe-bayes-web                      # -> http://127.0.0.1:8000
+# 2) start the web app — first run creates .venv and installs deps automatically:
+cd jetson_gemma
+./run.sh                             # -> http://127.0.0.1:8000
 ```
 
 Then open **http://127.0.0.1:8000**, pick a site, enter a value, and submit.
@@ -87,7 +82,7 @@ ssh -f -N -L 11434:localhost:11434 <user>@<jetson-ip>
 ### ② The laptop (web app)
 
 ```bash
-APP_MODE=dev globe-bayes-web         # http://127.0.0.1:8000
+APP_MODE=dev ./run.sh                # http://127.0.0.1:8000
 ```
 
 On startup it seeds demo data (first run only) and **pre-warms** the model in the
@@ -97,7 +92,8 @@ background so the first reading isn't an ~80 s cold load.
 
 ## What each part does
 
-Installable package: `globe_bayes/` at the repo root (editable install: `pip install -e .`).
+Plain Python package: `globe_bayes/` at the repo root — no install step. `./run.sh`
+handles the venv + `requirements.txt` and launches `python -m globe_bayes.frontend.webform`.
 
 ```
 globe_bayes/
@@ -152,7 +148,7 @@ LAYER                          FILE(S)                              EXTERNAL DEP
 | **Model + on-disk persistence** | `bayes/model.py`, `bayes/store.py` | `config.py` | `numpy` |
 | **The LLM narrator** (turn any structured report → prose) | `narrator.py`, `bayes/model_card.py` | `bayes/model.py`, `config.py` | `requests` + Ollama |
 | **The direct-cable Jetson network** (no Python at all) | `scripts/setup_jetson_direct_net.sh` | — | bash, NetworkManager |
-| **The whole demo** | everything | — | see `pyproject.toml` |
+| **The whole demo** | everything | — | see `requirements.txt` |
 
 **Notes for lifting pieces:**
 - `bayes/model.py` is deliberately dependency-free (just `numpy`) and is the **canonical
@@ -221,7 +217,8 @@ Every accepted reading also gets a short, **hedged** ecological note (what the c
 suggests for the lake/river and plausible causes), drawn from the model's own aquatic
 knowledge.
 
-> **Iterating on prompts:** edit `narrator.py`, run `globe-bayes-payloads /tmp/payloads`
+> **Iterating on prompts:** edit `narrator.py`, run
+> `.venv/bin/python -m globe_bayes.bayes.make_test_payloads /tmp/payloads`
 > to regenerate per-scenario request files, `scp` them to the Jetson, and `curl` each
 > against `/api/chat` to compare wordings without touching the app.
 
@@ -229,7 +226,7 @@ knowledge.
 
 ## Configuration (env vars)
 
-Set any of these before `globe-bayes-web` (e.g. `TUBE_LENGTH_CM=60 globe-bayes-web`):
+Set any of these before `./run.sh` (e.g. `TUBE_LENGTH_CM=60 ./run.sh`):
 
 | Var | Default | Meaning |
 |---|---|---|
