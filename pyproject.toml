@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "globe_bayes"
+version = "0.1.0"
+description = "Edge AI water-clarity demo: a Bayesian model on the device with a swappable LLM interpreter on a Jetson."
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0",
+    "numpy>=1.26",
+    "requests>=2.31",
+]
+
+[project.scripts]
+# Run the front-end:        globe-bayes-web
+# Regenerate test payloads: globe-bayes-payloads [out_dir]
+globe-bayes-web = "globe_bayes.frontend.webform:main"
+globe-bayes-payloads = "globe_bayes.bayes.make_test_payloads:main"
+
+[tool.setuptools.packages.find]
+# Flat layout: the globe_bayes/ package lives at the repo root.
+include = ["globe_bayes*"]
+
+[tool.setuptools.package-data]
+"globe_bayes.frontend" = ["bgp.jpg"]

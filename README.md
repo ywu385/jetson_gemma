@@ -34,24 +34,24 @@ and deterministic stays on the laptop.
 
 ## Quick start (TL;DR)
 
-> **First time on a fresh Jetson?** It won't be reachable at `10.42.0.1` until you turn
-> its wired port into a DHCP server. Run this **once, on the Jetson**, then plug in the
-> cable (see [Deploying to your own Jetson](#deploying-to-your-own-jetson) for the full
-> steps):
+> **Using the direct-cable setup?** A fresh Jetson won't be reachable at `10.42.0.1`
+> until you turn its wired port into a DHCP server. Run this **once, on the Jetson**,
+> then plug in the cable (see [Deploying to your own Jetson](#deploying-to-your-own-jetson)
+> for the full steps). This is optional — any SSH or network route to the Jetson works.
 > ```bash
 > sudo bash scripts/setup_jetson_direct_net.sh     # Jetson becomes 10.42.0.1
 > ```
 
 ```bash
 # --- one-time setup (laptop) ---
-cd globe_bayes
+cd jetson_gemma
 python -m venv .venv && source .venv/bin/activate
 pip install -e .                     # installs deps + the globe-bayes-* commands
 
 # --- every run ---
-# 1) open the tunnel to the Jetson (separate terminal, leave it open):
-#    (assumes the Jetson is already set up as a DHCP server at 10.42.0.1 — see note above)
-ssh -f -N -L 11434:localhost:11434 jwu385@10.42.0.1
+# 1) open the tunnel to the Jetson (separate terminal, leave it open).
+#    Use YOUR username and however you reach YOUR Jetson (IP, mDNS name, alias):
+ssh -f -N -L 11434:localhost:11434 <user>@<jetson-ip>
 
 # 2) start the web app:
 globe-bayes-web                      # -> http://127.0.0.1:8000
@@ -68,16 +68,21 @@ You need **both** halves up for full narration.
 ### ① The Jetson (narration engine)
 
 Ollama runs `gemma4:e2b` as a service on the Jetson's `:11434`. It's bound to the
-Jetson's *localhost*, so you reach it by forwarding that port to your laptop over SSH:
+Jetson's *localhost*, so you reach it by forwarding that port to your laptop over SSH —
+**using your own username and whatever address your Jetson answers on** (an IP, an mDNS
+name, an SSH alias; `10.42.0.1` is only what the optional direct-cable setup uses):
 
 ```bash
-ssh -f -N -L 11434:localhost:11434 jwu385@10.42.0.1     # direct cable
-# or over Wi-Fi:  ssh -f -N -L 11434:localhost:11434 jwu385@jwu385-jetson.local
+ssh -f -N -L 11434:localhost:11434 <user>@<jetson-ip>
 ```
 
 - `-f -N` runs it backgrounded with no shell. Drop those flags to keep it in a visible
   window you can `Ctrl-C`.
-- Once open, your laptop's `localhost:11434` **is** the Jetson's Ollama.
+- Once open, your laptop's `localhost:11434` **is** the Jetson's Ollama — the app's
+  default `JETSON_OLLAMA_URL` just works.
+- Not tunneling? Any route that makes Ollama reachable is fine — e.g. run Ollama with
+  `OLLAMA_HOST=0.0.0.0` on the Jetson and set
+  `JETSON_OLLAMA_URL=http://<jetson-ip>:11434` instead.
 
 ### ② The laptop (web app)
 
@@ -92,10 +97,10 @@ background so the first reading isn't an ~80 s cold load.
 
 ## What each part does
 
-Installable package under `src/globe_bayes/` (editable install: `pip install -e .`).
+Installable package: `globe_bayes/` at the repo root (editable install: `pip install -e .`).
 
 ```
-src/globe_bayes/
+globe_bayes/
 ├── config.py            # all env-overridable settings (one place)
 ├── narrator.py          # THE SWAPPABLE LLM LAYER — Ivonabot
 ├── bayes/               # deterministic core (the "truth")
@@ -255,8 +260,9 @@ Set any of these before `globe-bayes-web` (e.g. `TUBE_LENGTH_CM=60 globe-bayes-w
    ```
    Plug a cable from your laptop into that port (laptop on default/Automatic settings);
    you'll pull a `10.42.0.x` lease and reach the Jetson at `10.42.0.1`.
-3. **Point the app at it** (if not using the default tunnel): open the SSH tunnel to your
-   Jetson's user/IP, or set `JETSON_OLLAMA_URL`.
+3. **Point the app at it**: open the SSH tunnel with your user and your Jetson's
+   address (`ssh -f -N -L 11434:localhost:11434 <you>@<your-jetson>`), or set
+   `JETSON_OLLAMA_URL` directly.
 
 ---
 
@@ -264,7 +270,7 @@ Set any of these before `globe-bayes-web` (e.g. `TUBE_LENGTH_CM=60 globe-bayes-w
 
 | Symptom | Fix |
 |---|---|
-| "**Interpreter offline**" in the prose block | The tunnel is down. Re-run the `ssh -f -N -L 11434:...` command. Check with `curl localhost:11434/api/tags`. |
+| "**Interpreter offline**" in the prose block | The tunnel is down. Re-run `ssh -f -N -L 11434:localhost:11434 <user>@<jetson-ip>`. Verify with `curl localhost:11434/api/tags`. |
 | **First reading takes ~80 s** | Cold model load. It's a one-time cost; `keep_alive` + startup pre-warm keep it fast after. Pre-warm manually: `curl localhost:11434/api/generate -d '{"model":"gemma4:e2b","keep_alive":"30m"}'`. |
 | **Port 8000 in use** | Stop the old server: `lsof -ti tcp:8000 | xargs kill`. |
 | **Want a clean demo** | Delete `model_state.json` and restart — it reseeds fresh. |
