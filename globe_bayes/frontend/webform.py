@@ -48,7 +48,7 @@ _PAGE = """
       padding: 1.25rem 1.5rem; border-radius: 0.75rem;
       /* push toward the bottom: top margin soaks up the space, panel floats 12vh
          above the bottom edge; collapses to top-aligned if taller than the screen */
-      margin-top: auto; margin-bottom: 12vh;
+      margin-top: auto; margin-bottom: 45vh;
     }}
     button {{
       background: white; border: 1px solid white; border-radius: 0.5rem;
