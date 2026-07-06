@@ -38,6 +38,7 @@ _PAGE = """
     html, body {{ min-height: 100vh; margin: 0; }}
     body {{
       box-sizing: border-box; padding: 2rem;
+      display: flex; flex-direction: column;
       background-image: url("/bgp.jpg");
       background-size: cover; background-position: center; background-repeat: no-repeat;
       color: white; font-family: Arial, sans-serif;
@@ -45,6 +46,7 @@ _PAGE = """
     .panel {{
       max-width: 40rem; background: rgba(0,0,0,0.55);
       padding: 1.25rem 1.5rem; border-radius: 0.75rem;
+      margin: auto 0;  /* vertically center; collapses to top-aligned if taller than the screen */
     }}
     button {{
       background: white; border: 1px solid white; border-radius: 0.5rem;
